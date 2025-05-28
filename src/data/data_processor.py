@@ -17,47 +17,34 @@ class DataProcessor:
         """Load data from CSV file."""
         return pd.read_csv(file_path)
 
-    def perform_eda(self, df):
-        """Perform exploratory data analysis."""
-        # Basic statistics
-        print("Basic Statistics:")
-        print(df.describe())
-
-        # Check for missing values
-        print("\nMissing Values:")
-        print(df.isnull().sum())
-
-        # Correlation analysis
-        plt.figure(figsize=(12, 8))
-        correlation_matrix = df.corr()
-        sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", center=0)
-        plt.title("Feature Correlation Matrix")
-        plt.tight_layout()
-        plt.savefig("correlation_matrix.png")
-
-        # Distribution of target variable
-        plt.figure(figsize=(10, 6))
-        sns.histplot(df["target"], kde=True)
-        plt.title("Target Variable Distribution")
-        plt.savefig("target_distribution.png")
-
-        # Feature distributions
-        plt.figure(figsize=(15, 10))
-        for i, feature in enumerate(df.columns[:-1], 1):
-            plt.subplot(4, 5, i)
-            sns.histplot(df[feature], kde=True)
-            plt.title(f"Feature {i-1}")
-        plt.tight_layout()
-        plt.savefig("feature_distributions.png")
-
     def preprocess_data(self, df, is_training=True):
-        """Preprocess the data for model training or prediction."""
+        """Preprocess the data for model training or prediction, including outlier capping and scaling."""
+        outlier_limits_path = "models/outlier_limits.joblib"
         if is_training:
             X = df.drop("target", axis=1)
             y = df["target"]
 
+            # Calculate IQR-based outlier caps for each feature
+            Q1 = X.quantile(0.25)
+            Q3 = X.quantile(0.75)
+            IQR = Q3 - Q1
+            lower = Q1 - 1.5 * IQR
+            upper = Q3 + 1.5 * IQR
+            outlier_limits = {col: (lower[col], upper[col]) for col in X.columns}
+
+            # Cap outliers
+            X_capped = X.copy()
+            for col in X.columns:
+                X_capped[col] = X_capped[col].clip(
+                    lower=outlier_limits[col][0], upper=outlier_limits[col][1]
+                )
+
+            # Save outlier limits
+            os.makedirs(os.path.dirname(outlier_limits_path), exist_ok=True)
+            joblib.dump(outlier_limits, outlier_limits_path)
+
             # Scale features
-            X_scaled = self.scaler.fit_transform(X)
+            X_scaled = self.scaler.fit_transform(X_capped)
 
             # Save the fitted scaler
             os.makedirs(os.path.dirname(self.scaler_path), exist_ok=True)
@@ -76,6 +63,19 @@ class DataProcessor:
                 self.scaler = joblib.load(self.scaler_path)
             else:
                 raise Exception("Scaler not found. Please train the model first.")
-
-            X_scaled = self.scaler.transform(X)
+            # Load outlier limits
+            if os.path.exists(outlier_limits_path):
+                outlier_limits = joblib.load(outlier_limits_path)
+            else:
+                raise Exception(
+                    "Outlier limits not found. Please train the model first."
+                )
+            # Cap outliers using training limits
+            X_capped = X.copy()
+            for col in X.columns:
+                if col in outlier_limits:
+                    X_capped[col] = X_capped[col].clip(
+                        lower=outlier_limits[col][0], upper=outlier_limits[col][1]
+                    )
+            X_scaled = self.scaler.transform(X_capped)
             return X_scaled
