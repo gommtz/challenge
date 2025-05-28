@@ -20,12 +20,17 @@ async def load_model():
     global model
     try:
         # Set MLflow tracking URI
-        mlflow.set_tracking_uri("http://localhost:5000")
+        mlflow_url = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
+        mlflow.set_tracking_uri(mlflow_url)
 
         # Get the latest run
         client = mlflow.tracking.MlflowClient()
+        experiment = client.get_experiment_by_name("model_training")
+        if experiment is None:
+            raise Exception("Experiment 'model_training' not found in MLflow server.")
+
         runs = client.search_runs(
-            experiment_ids=["0"],  # Default experiment
+            experiment_ids=[experiment.experiment_id],
             order_by=["start_time DESC"],
             max_results=1,
         )

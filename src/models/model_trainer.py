@@ -9,8 +9,9 @@ import os
 class ModelTrainer:
     def __init__(self):
         self.model = None
-        # Set MLflow tracking URI to remote server
-        mlflow.set_tracking_uri("http://184.105.5.162:5000")
+        # Set MLflow tracking URI from environment variable
+        mlflow_url = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
+        mlflow.set_tracking_uri(mlflow_url)
         # Set experiment name
         mlflow.set_experiment("model_training")
 

@@ -5,8 +5,8 @@ import os
 
 
 def main():
-    # Set MLflow tracking URI
-    mlflow.set_tracking_uri("http://184.105.5.162:5000")
+    mlflow_url = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
+    mlflow.set_tracking_uri(mlflow_url)
 
     # Initialize components
     data_processor = DataProcessor()
