@@ -3,11 +3,16 @@ import mlflow
 import mlflow.xgboost
 from sklearn.metrics import mean_squared_error, r2_score
 import numpy as np
+import os
 
 
 class ModelTrainer:
     def __init__(self):
         self.model = None
+        # Set MLflow tracking URI to remote server
+        mlflow.set_tracking_uri("http://184.105.5.162:5000")
+        # Set experiment name
+        mlflow.set_experiment("model_training")
 
     def train_model(self, X_train, y_train, X_val, y_val):
         """Train XGBoost model with MLflow tracking."""
@@ -48,8 +53,12 @@ class ModelTrainer:
             mlflow.log_metric("mse", mse)
             mlflow.log_metric("r2", r2)
 
-            # Log model
-            mlflow.xgboost.log_model(self.model, "model")
+            # Log model with explicit path
+            model_path = "model"
+            mlflow.xgboost.log_model(self.model, model_path)
+
+            # Log the model path for reference
+            mlflow.log_param("model_path", model_path)
 
             return mse, r2
 

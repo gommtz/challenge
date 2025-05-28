@@ -11,7 +11,7 @@ import os
 class DataProcessor:
     def __init__(self):
         self.scaler = StandardScaler()
-        self.scaler_path = "models/scaler.joblib"
+        self.scaler_path = "src/data/models/scaler.joblib"
 
     def load_data(self, file_path):
         """Load data from CSV file."""
@@ -19,7 +19,7 @@ class DataProcessor:
 
     def preprocess_data(self, df, is_training=True):
         """Preprocess the data for model training or prediction, including outlier capping and scaling."""
-        outlier_limits_path = "models/outlier_limits.joblib"
+        outlier_limits_path = "src/data/models/outlier_limits.joblib"
         if is_training:
             X = df.drop("target", axis=1)
             y = df["target"]

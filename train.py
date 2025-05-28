@@ -6,10 +6,7 @@ import os
 
 def main():
     # Set MLflow tracking URI
-    mlflow.set_tracking_uri("http://localhost:5000")
-
-    # Create models directory if it doesn't exist
-    os.makedirs("models", exist_ok=True)
+    mlflow.set_tracking_uri("http://184.105.5.162:5000")
 
     # Initialize components
     data_processor = DataProcessor()
@@ -18,9 +15,6 @@ def main():
     # Load and process data
     print("Loading training data...")
     train_data = data_processor.load_data("src/data/processed/training_data.csv")
-
-    print("Performing EDA...")
-    data_processor.perform_eda(train_data)
 
     print("Preprocessing data...")
     X_train, X_val, y_train, y_val = data_processor.preprocess_data(train_data)
