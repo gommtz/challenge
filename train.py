@@ -17,7 +17,7 @@ def main():
 
     # Load and process data
     print("Loading training data...")
-    train_data = data_processor.load_data("training_data.csv")
+    train_data = data_processor.load_data("src/data/processed/training_data.csv")
 
     print("Performing EDA...")
     data_processor.perform_eda(train_data)
@@ -31,13 +31,13 @@ def main():
 
     # Make predictions on blind test data
     print("Making predictions on blind test data...")
-    blind_test_data = data_processor.load_data("blind_test_data.csv")
+    blind_test_data = data_processor.load_data("src/data/processed/blind_test_data.csv")
     X_test = data_processor.preprocess_data(blind_test_data, is_training=False)
     predictions = model_trainer.predict(X_test)
 
     # Save predictions
     print("Saving predictions...")
-    model_trainer.save_predictions(predictions, "predictions.csv")
+    model_trainer.save_predictions(predictions, "src/data/processed/predictions.csv")
     print("Done!")
 
 
