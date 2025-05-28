@@ -5,6 +5,8 @@ import mlflow
 from src.data.data_processor import DataProcessor
 from src.models.model_trainer import ModelTrainer
 import os
+from fastapi.responses import StreamingResponse
+import io
 
 app = FastAPI(title="ML Challenge API")
 data_processor = DataProcessor()
@@ -55,7 +57,7 @@ async def load_model():
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
-    """Make predictions on uploaded data."""
+    """Make predictions on uploaded data and return a CSV file with predictions."""
     if model is None:
         raise HTTPException(
             status_code=500, detail="Model not loaded. Please check the server logs."
@@ -71,10 +73,20 @@ async def predict(file: UploadFile = File(...)):
         # Make predictions
         predictions = model.predict(X)
 
-        # Create response
-        response = pd.DataFrame({"target_pred": predictions})
+        # Add predictions to the original dataframe
+        df["target_pred"] = predictions
 
-        return response.to_dict(orient="records")
+        # Create a CSV file in memory
+        output = io.StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+
+        # Return the CSV file
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename=predictions.csv"},
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
